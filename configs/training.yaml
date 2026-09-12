@@ -1,0 +1,16 @@
+schema_version: 1
+seed: 42
+
+dataset_path: data/processed/train.parquet
+validation_path: data/processed/validation.parquet
+output_dir: artifacts/models/reranker
+
+model:
+  name: null  # Выберите модель после определения языка, данных и оборудования.
+  revision: null  # Зафиксируйте неизменяемую версию модели при реализации.
+
+training:
+  device: cpu
+  batch_size: null
+  epochs: null
+  learning_rate: null
