@@ -1,0 +1,202 @@
+name: nlp-ranker
+
+services:
+  api:
+    image: nlp-ranker-api:local
+    build: .
+
+    ports: ["127.0.0.1:8000:8000"]
+
+    environment:
+      NLP_RANKER_ENVIRONMENT: local
+      NLP_RANKER_LOG_FORMAT: json
+      NLP_RANKER_MLFLOW_TRACKING_URI: http://mlflow:5000
+      NLP_RANKER_POSTGRES_DSN: postgresql+asyncpg://nlp_ranker:${POSTGRES_PASSWORD:-local-dev-only}@postgres:5432/nlp_ranker
+      NLP_RANKER_REDIS_URL: redis://redis:6379/0
+      NLP_RANKER_SEARCH_ACTIVE_LIMIT: "${NLP_RANKER_SEARCH_ACTIVE_LIMIT:-1}"
+      NLP_RANKER_SEARCH_WAITING_LIMIT: "${NLP_RANKER_SEARCH_WAITING_LIMIT:-8}"
+      NLP_RANKER_SEARCH_QUEUE_TIMEOUT_SECONDS: "${NLP_RANKER_SEARCH_QUEUE_TIMEOUT_SECONDS:-1}"
+      NLP_RANKER_SEARCH_TIMEOUT_SECONDS: "${NLP_RANKER_SEARCH_TIMEOUT_SECONDS:-10}"
+      NLP_RANKER_CACHE_ENABLED: "${NLP_RANKER_CACHE_ENABLED:-true}"
+      NLP_RANKER_CACHE_TIMEOUT_SECONDS: "${NLP_RANKER_CACHE_TIMEOUT_SECONDS:-0.1}"
+      NLP_RANKER_CACHE_MAX_BYTES: "${NLP_RANKER_CACHE_MAX_BYTES:-65536}"
+      NLP_RANKER_CACHE_TTL_SECONDS: "${NLP_RANKER_CACHE_TTL_SECONDS:-300}"
+      NLP_RANKER_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-nlp_ranker}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-local-dev-only}
+
+    volumes:
+      - ./artifacts/indexes:/app/artifacts/indexes:ro
+      - ./configs:/app/configs:ro
+      - model-cache:/home/app/.cache/huggingface
+
+    init: true
+    stop_grace_period: 20s
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg17-trixie
+    profiles: [storage]
+
+    ports: ["127.0.0.1:5432:5432"]
+
+    environment:
+      POSTGRES_USER: nlp_ranker
+      POSTGRES_DB: nlp_ranker
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only}
+
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nlp_ranker -d nlp_ranker"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7.4-alpine
+    profiles: [storage]
+
+    ports: ["127.0.0.1:6379:6379"]
+
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  demo:
+    image: nlp-ranker-demo:local
+    build:
+      context: .
+      args:
+        INSTALL_DEMO: "true"
+    profiles: [demo]
+
+    init: true
+    stop_grace_period: 20s
+
+    ports: ["127.0.0.1:8501:8501"]
+
+    environment:
+      NLP_RANKER_API_URL: http://api:8000
+
+    command: ["streamlit", "run", "/app/src/nlp_ranker/ui/app.py", "--server.address=0.0.0.0"]
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2)"]
+
+    depends_on:
+      api:
+        condition: service_healthy
+
+  minio:
+    image: nlp-ranker-minio:local
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.minio
+    profiles: [storage]
+
+    command: server /data --console-address :9001
+
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-nlp_ranker}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-dev-only}
+
+    volumes: ["minio-data:/data"]
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mlflow:
+    image: nlp-ranker-mlflow:local
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.mlflow
+    profiles: [tracking]
+
+    init: true
+    stop_grace_period: 20s
+
+    ports: ["127.0.0.1:5000:5000"]
+
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --workers
+      - "1"
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --serve-artifacts
+      - --artifacts-destination
+      - /mlflow/artifacts
+      - --allowed-hosts
+      - mlflow:5000,localhost:5000,127.0.0.1:5000
+
+    volumes: ["mlflow-data:/mlflow"]
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    profiles: [monitoring]
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+    ports: ["127.0.0.1:9090:9090"]
+
+    volumes:
+      - ./deployment/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./deployment/prometheus/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+      - prometheus-data:/prometheus
+
+    depends_on:
+      api:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    profiles: [monitoring]
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+    ports: ["127.0.0.1:3000:3000"]
+
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-local-dev-only}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+
+    volumes:
+      - ./deployment/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deployment/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  minio-data:
+  mlflow-data:
+  prometheus-data:
+  grafana-data:
+  model-cache:

@@ -1,0 +1,78 @@
+name: nlp-ranker-test
+
+services:
+  api:
+    image: nlp-ranker-api:local
+    build: .
+
+    init: true
+    stop_grace_period: 20s
+
+    ports: ["127.0.0.1:8001:8000"]
+
+    environment:
+      NLP_RANKER_ENVIRONMENT: test
+      NLP_RANKER_SEARCH_ENABLED: "false"
+      NLP_RANKER_LOG_FORMAT: json
+      NLP_RANKER_POSTGRES_DSN: postgresql+asyncpg://nlp_ranker:test-only@postgres:5432/nlp_ranker_test
+      NLP_RANKER_REDIS_URL: redis://redis:6379/0
+      NLP_RANKER_S3_ENDPOINT_URL: http://minio:9000
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  postgres:
+    ports: ["127.0.0.1:5433:5432"]
+
+    image: pgvector/pgvector:0.8.6-pg17-trixie
+
+    environment:
+      POSTGRES_USER: nlp_ranker
+      POSTGRES_DB: nlp_ranker_test
+      POSTGRES_PASSWORD: test-only
+
+    tmpfs: [/var/lib/postgresql/data]
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nlp_ranker -d nlp_ranker_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  redis:
+    ports: ["127.0.0.1:6380:6379"]
+
+    image: redis:7.4-alpine
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  minio:
+    ports: ["127.0.0.1:9002:9000"]
+
+    image: nlp-ranker-minio:local
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile.minio
+
+    command: server /data
+
+    environment:
+      MINIO_ROOT_USER: nlp_ranker
+      MINIO_ROOT_PASSWORD: test-only
+
+    tmpfs: ["/data:uid=10001,gid=10001"]
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9000/minio/health/live"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
