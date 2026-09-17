@@ -1,0 +1,13 @@
+query_id,text,group_id,split,category
+data,"Инженер данных SQL и pandas, удалённая работа",data,train,role_and_constraints
+accounting,Бухгалтер по расчёту заработной платы в 1С,accounting,train,role_and_constraints
+qa,Удалённое ручное тестирование веб-приложений,qa,validation,role_and_constraints
+driver,Водитель-экспедитор категории C для доставки товаров,driver,test,role_and_constraints
+php,Junior PHP backend-разработчик без коммерческого опыта,php,test,role_and_constraints
+cook,"Повар без опыта, с обучением на месте",cook,validation,role_and_constraints
+java,Java-разработчик backend со Spring,java,validation,role_and_constraints
+frontend,Frontend-разработчик React и TypeScript,frontend,validation,role_and_constraints
+one_c,Программист 1С: разработка и доработка конфигураций,one_c,train,role_and_constraints
+sales,Удалённый менеджер по продажам без поиска клиентов,sales,train,role_and_constraints
+nurse,Медицинская сестра процедурного кабинета: забор крови и инъекции,nurse,test,role_and_constraints
+cleaner,Уборщик офисных и служебных помещений без опыта,cleaner,test,role_and_constraints

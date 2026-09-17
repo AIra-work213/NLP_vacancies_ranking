@@ -1,0 +1,9 @@
+schema_version: 1
+data_version: mendeley-v1-sample
+seed: 42
+
+input_path: data/raw/vacancies_sample.csv
+output_path: data/processed/documents.parquet
+# Группируйте связанные документы до разбиения для защиты от утечки данных.
+
+split_group_field: group_id
