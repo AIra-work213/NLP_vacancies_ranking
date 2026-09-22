@@ -1,0 +1,5 @@
+outs:
+- md5: 7736ec7081828ffd16a5ea31d53e40af
+  size: 5664358
+  hash: md5
+  path: vacancies_sample.csv

@@ -1,0 +1,6 @@
+[core]
+    autostage = false
+    remote = local-s3
+['remote "local-s3"']
+    url = s3://nlp-ranker/dvc
+    endpointurl = http://localhost:9000

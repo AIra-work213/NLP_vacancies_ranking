@@ -1,0 +1,91 @@
+vars:
+  - configs/data.yaml
+  - configs/search.yaml:bm25,dense
+  - configs/evaluation.yaml:dataset_path,qrels_path,corpus_path,index_path,metrics_path
+
+stages:
+
+  prepare:
+    cmd: uv run --no-sync nlp-ranker-pipeline prepare --config configs/data.yaml
+    deps:
+      - ${input_path}
+      - configs/data.yaml
+      - uv.lock
+      - src/nlp_ranker/pipelines/data.py
+      - src/nlp_ranker/core/config.py
+      - src/nlp_ranker/core/logging.py
+      - src/nlp_ranker/cli.py
+    outs:
+      - ${output_path}
+
+  prepare_labels:
+    cmd: uv run --no-sync python -c 'from pathlib import Path; from nlp_ranker.pipelines.data
+      import prepare_labels; prepare_labels(corpus_path=Path("${output_path}"))'
+    deps:
+      - ${output_path}
+      - data/queries.csv
+      - data/qrels.csv
+      - uv.lock
+      - src/nlp_ranker/pipelines/data.py
+      - src/nlp_ranker/core/config.py
+    outs:
+      - data/processed/queries.parquet
+      - data/processed/qrels.parquet
+
+  index:
+    cmd: uv run --no-sync nlp-ranker-pipeline index --config configs/search.yaml
+    deps:
+      - ${bm25.corpus_path}
+      - configs/search.yaml
+      - uv.lock
+      - src/nlp_ranker/pipelines/index.py
+      - src/nlp_ranker/ml/retrieval/bm25.py
+      - src/nlp_ranker/ml/config.py
+      - src/nlp_ranker/domain/search.py
+      - src/nlp_ranker/core/config.py
+      - src/nlp_ranker/core/logging.py
+      - src/nlp_ranker/cli.py
+      - src/nlp_ranker/mlops/tracking.py
+    outs:
+      - ${bm25.index_path}
+
+  embed:
+    cmd: uv run --no-sync nlp-ranker-pipeline embed --config configs/search.yaml
+    deps:
+      - ${bm25.corpus_path}
+      - configs/search.yaml
+      - uv.lock
+      - src/nlp_ranker/pipelines/embeddings.py
+      - src/nlp_ranker/ml/artifacts.py
+      - src/nlp_ranker/ml/inference/encoder.py
+      - src/nlp_ranker/ml/config.py
+      - src/nlp_ranker/domain/documents.py
+      - src/nlp_ranker/core/config.py
+      - src/nlp_ranker/core/logging.py
+      - src/nlp_ranker/cli.py
+    outs:
+      - ${dense.artifact_path}:
+          persist: true
+
+  evaluate:
+    cmd: uv run --no-sync nlp-ranker-pipeline evaluate --config configs/evaluation.yaml
+    deps:
+      - ${index_path}
+      - ${corpus_path}
+      - ${dataset_path}
+      - ${qrels_path}
+      - configs/evaluation.yaml
+      - uv.lock
+      - src/nlp_ranker/pipelines/evaluate.py
+      - src/nlp_ranker/ml/evaluation/config.py
+      - src/nlp_ranker/ml/evaluation/metrics.py
+      - src/nlp_ranker/ml/retrieval/bm25.py
+      - src/nlp_ranker/ml/retrieval/hybrid.py
+      - src/nlp_ranker/ml/config.py
+      - src/nlp_ranker/domain/search.py
+      - src/nlp_ranker/core/config.py
+      - src/nlp_ranker/core/logging.py
+      - src/nlp_ranker/cli.py
+      - src/nlp_ranker/mlops/tracking.py
+    outs:
+      - ${metrics_path}

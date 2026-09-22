@@ -1,0 +1,257 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: uv run --no-sync nlp-ranker-pipeline prepare --config configs/data.yaml
+    deps:
+    - path: configs/data.yaml
+      hash: md5
+      md5: d39dceeacd86fee2c7e7a7050bbd3ec4
+      size: 317
+    - path: data/raw/vacancies_sample.csv
+      hash: md5
+      md5: 7736ec7081828ffd16a5ea31d53e40af
+      size: 5664358
+    - path: src/nlp_ranker/cli.py
+      hash: md5
+      md5: 519294c06b40eb2555b0df99f68ca122
+      size: 7358
+    - path: src/nlp_ranker/core/config.py
+      hash: md5
+      md5: 2e9bc1cc675c4c64263caed32a62b2ef
+      size: 5206
+    - path: src/nlp_ranker/core/logging.py
+      hash: md5
+      md5: 42c4ed12c54878376b7b1221a62c0dca
+      size: 2364
+    - path: src/nlp_ranker/pipelines/data.py
+      hash: md5
+      md5: 2e377890c71ef4d812dd31da36905017
+      size: 12340
+    - path: uv.lock
+      hash: md5
+      md5: 56eae1cc76716fd22c63732cdf58bea5
+      size: 419939
+    outs:
+    - path: data/processed/documents.parquet
+      hash: md5
+      md5: 48aabeb70ee06a550f6336a7309a84e0
+      size: 2148427
+  prepare_labels:
+    cmd: uv run --no-sync python -c 'from pathlib import Path; from 
+      nlp_ranker.pipelines.data import prepare_labels; 
+      prepare_labels(corpus_path=Path("data/processed/documents.parquet"))'
+    deps:
+    - path: data/processed/documents.parquet
+      hash: md5
+      md5: 48aabeb70ee06a550f6336a7309a84e0
+      size: 2148427
+    - path: data/qrels.csv
+      hash: md5
+      md5: a7f7e50ef1f4436c32005e9ebfc23c25
+      size: 48602
+    - path: data/queries.csv
+      hash: md5
+      md5: 492d80254edfe9a7a7187943be672b1a
+      size: 1537
+    - path: src/nlp_ranker/core/config.py
+      hash: md5
+      md5: 2e9bc1cc675c4c64263caed32a62b2ef
+      size: 5206
+    - path: src/nlp_ranker/pipelines/data.py
+      hash: md5
+      md5: 2e377890c71ef4d812dd31da36905017
+      size: 12340
+    - path: uv.lock
+      hash: md5
+      md5: 56eae1cc76716fd22c63732cdf58bea5
+      size: 419939
+    outs:
+    - path: data/processed/qrels.parquet
+      hash: md5
+      md5: 2564d03ec959a2a017b4d1ccbe211c98
+      size: 29394
+    - path: data/processed/queries.parquet
+      hash: md5
+      md5: caba98a90845ecd0b7b0a78bb02a380a
+      size: 2952
+  index:
+    cmd: uv run --no-sync nlp-ranker-pipeline index --config configs/search.yaml
+    deps:
+    - path: configs/search.yaml
+      hash: md5
+      md5: 5964535ebcf9fd78dad58744e5535b35
+      size: 739
+    - path: data/processed/documents.parquet
+      hash: md5
+      md5: 48aabeb70ee06a550f6336a7309a84e0
+      size: 2148427
+    - path: src/nlp_ranker/cli.py
+      hash: md5
+      md5: 519294c06b40eb2555b0df99f68ca122
+      size: 7358
+    - path: src/nlp_ranker/core/config.py
+      hash: md5
+      md5: 2e9bc1cc675c4c64263caed32a62b2ef
+      size: 5206
+    - path: src/nlp_ranker/core/logging.py
+      hash: md5
+      md5: 42c4ed12c54878376b7b1221a62c0dca
+      size: 2364
+    - path: src/nlp_ranker/domain/search.py
+      hash: md5
+      md5: 3e858ebc6e820c53eb7b101b8a7c0b39
+      size: 1383
+    - path: src/nlp_ranker/ml/config.py
+      hash: md5
+      md5: d549cd65b1f5ed21c2039992c55d021c
+      size: 4193
+    - path: src/nlp_ranker/ml/retrieval/bm25.py
+      hash: md5
+      md5: ad57cfc3b021fedf62d9107c2dd8b351
+      size: 6862
+    - path: src/nlp_ranker/mlops/tracking.py
+      hash: md5
+      md5: e4fd63ca208020e4e3a5d4d9d2ac9309
+      size: 9799
+    - path: src/nlp_ranker/pipelines/index.py
+      hash: md5
+      md5: 9c5c7cf95ff742cc4dd8ce4e90ba9ec9
+      size: 807
+    - path: uv.lock
+      hash: md5
+      md5: 56eae1cc76716fd22c63732cdf58bea5
+      size: 419939
+    outs:
+    - path: artifacts/indexes/bm25.zip
+      hash: md5
+      md5: b41fd5acf9435667137bb8381ce62796
+      size: 1295627
+  evaluate:
+    cmd: uv run --no-sync nlp-ranker-pipeline evaluate --config 
+      configs/evaluation.yaml
+    deps:
+    - path: artifacts/indexes/bm25.zip
+      hash: md5
+      md5: b41fd5acf9435667137bb8381ce62796
+      size: 1295627
+    - path: configs/evaluation.yaml
+      hash: md5
+      md5: 05f66e1ae2a0ae03ac2c88017a0ee322
+      size: 585
+    - path: data/processed/documents.parquet
+      hash: md5
+      md5: 48aabeb70ee06a550f6336a7309a84e0
+      size: 2148427
+    - path: data/processed/qrels.parquet
+      hash: md5
+      md5: 2564d03ec959a2a017b4d1ccbe211c98
+      size: 29394
+    - path: data/processed/queries.parquet
+      hash: md5
+      md5: caba98a90845ecd0b7b0a78bb02a380a
+      size: 2952
+    - path: src/nlp_ranker/cli.py
+      hash: md5
+      md5: 519294c06b40eb2555b0df99f68ca122
+      size: 7358
+    - path: src/nlp_ranker/core/config.py
+      hash: md5
+      md5: 2e9bc1cc675c4c64263caed32a62b2ef
+      size: 5206
+    - path: src/nlp_ranker/core/logging.py
+      hash: md5
+      md5: 42c4ed12c54878376b7b1221a62c0dca
+      size: 2364
+    - path: src/nlp_ranker/domain/search.py
+      hash: md5
+      md5: 3e858ebc6e820c53eb7b101b8a7c0b39
+      size: 1383
+    - path: src/nlp_ranker/ml/config.py
+      hash: md5
+      md5: d549cd65b1f5ed21c2039992c55d021c
+      size: 4193
+    - path: src/nlp_ranker/ml/evaluation/config.py
+      hash: md5
+      md5: 04e61b2c1be7223602089f15f333cd49
+      size: 2676
+    - path: src/nlp_ranker/ml/evaluation/metrics.py
+      hash: md5
+      md5: 63c639f0c6edb03e2ef5ea2e700d5cf5
+      size: 3563
+    - path: src/nlp_ranker/ml/retrieval/bm25.py
+      hash: md5
+      md5: ad57cfc3b021fedf62d9107c2dd8b351
+      size: 6862
+    - path: src/nlp_ranker/ml/retrieval/hybrid.py
+      hash: md5
+      md5: c808843f28a28cae5b247f93751dd299
+      size: 1707
+    - path: src/nlp_ranker/mlops/tracking.py
+      hash: md5
+      md5: e4fd63ca208020e4e3a5d4d9d2ac9309
+      size: 9799
+    - path: src/nlp_ranker/pipelines/evaluate.py
+      hash: md5
+      md5: 59241a6d8fea39486e2c1dd4313d1b71
+      size: 9016
+    - path: uv.lock
+      hash: md5
+      md5: 56eae1cc76716fd22c63732cdf58bea5
+      size: 419939
+    outs:
+    - path: artifacts/reports/metrics.json
+      hash: md5
+      md5: 03ad86ce7977fb856c51c68049d99272
+      size: 46873
+  embed:
+    cmd: uv run --no-sync nlp-ranker-pipeline embed --config configs/search.yaml
+    deps:
+    - path: configs/search.yaml
+      hash: md5
+      md5: 5964535ebcf9fd78dad58744e5535b35
+      size: 739
+    - path: data/processed/documents.parquet
+      hash: md5
+      md5: 48aabeb70ee06a550f6336a7309a84e0
+      size: 2148427
+    - path: src/nlp_ranker/cli.py
+      hash: md5
+      md5: 519294c06b40eb2555b0df99f68ca122
+      size: 7358
+    - path: src/nlp_ranker/core/config.py
+      hash: md5
+      md5: 2e9bc1cc675c4c64263caed32a62b2ef
+      size: 5206
+    - path: src/nlp_ranker/core/logging.py
+      hash: md5
+      md5: 42c4ed12c54878376b7b1221a62c0dca
+      size: 2364
+    - path: src/nlp_ranker/domain/documents.py
+      hash: md5
+      md5: 21a90640b78b779f2b95fee6e613194a
+      size: 1624
+    - path: src/nlp_ranker/ml/artifacts.py
+      hash: md5
+      md5: 9ba4a1a84bd2f0cf178185c289e772d1
+      size: 1969
+    - path: src/nlp_ranker/ml/config.py
+      hash: md5
+      md5: d549cd65b1f5ed21c2039992c55d021c
+      size: 4193
+    - path: src/nlp_ranker/ml/inference/encoder.py
+      hash: md5
+      md5: aa8472b4b53436d961e44b73c4ad9f84
+      size: 3552
+    - path: src/nlp_ranker/pipelines/embeddings.py
+      hash: md5
+      md5: 0cd8b36b8f25270f7a8a5860af9d971b
+      size: 4942
+    - path: uv.lock
+      hash: md5
+      md5: 56eae1cc76716fd22c63732cdf58bea5
+      size: 419939
+    outs:
+    - path: artifacts/indexes/embeddings.parquet
+      hash: md5
+      md5: 54d24644e98334ab46b2882b4e874834
+      size: 8310147
