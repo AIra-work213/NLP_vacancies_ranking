@@ -1,0 +1,32 @@
+schema_version: 1
+data_version: mendeley-v1-sample
+bm25:
+  corpus_path: data/processed/documents.parquet
+  index_path: artifacts/indexes/bm25.zip
+  title_repeat: 3
+  k1: 1.5
+  b: 0.75
+retrieval:
+  candidate_limit: 50
+  fusion: rrf
+  rrf_k: 60
+  dense_weight: 0.5
+dense:
+  model_name: intfloat/multilingual-e5-small
+  revision: 614241f622f53c4eeff9890bdc4f31cfecc418b3
+  device: cpu
+  dimensions: 384
+  batch_size: 8
+  threads: 4
+  max_length: 512
+  chunk_tokens: 384
+  overlap_tokens: 64
+  artifact_path: artifacts/indexes/embeddings.parquet
+reranking:
+  enabled: false
+  top_k: 10
+  model_name: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+  revision: 1427fd652930e4ba29e8149678df786c240d8825
+  batch_size: 8
+  max_length: 512
+  threads: 4
