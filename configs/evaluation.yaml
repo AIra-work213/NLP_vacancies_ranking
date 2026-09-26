@@ -1,0 +1,18 @@
+schema_version: 1
+data_version: mendeley-v1-sample
+split: validation
+seed: 42
+latency_repeats: 10
+
+dataset_path: data/processed/queries.parquet
+qrels_path: data/processed/qrels.parquet
+corpus_path: data/processed/documents.parquet
+index_path: artifacts/indexes/bm25.zip
+metrics_path: artifacts/reports/metrics.json
+
+metrics: [ndcg_at_10, mrr_at_10, recall_at_100]
+
+quality_gate:
+  baseline_metrics_path: null
+  max_ndcg_regression: null
+# Настраивайте проверку по измеренному базовому варианту, без выдуманных метрик
