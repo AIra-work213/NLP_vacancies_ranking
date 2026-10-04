@@ -1,0 +1,49 @@
+rule_files:
+  - alerts.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="nlp-ranker-api"}'
+        values: '0+0x10'
+      - series: 'nlp_ranker_search_ready{job="nlp-ranker-api"}'
+        values: '0+0x10'
+      - series: 'http_requests_total{job="nlp-ranker-api",handler="/v1/search",status="503"}'
+        values: '0+10x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: RankerApiUnavailable
+        exp_alerts:
+          - exp_labels: {job: nlp-ranker-api, severity: warning}
+            exp_annotations: {summary: Маршрут метрик API недоступен}
+      - eval_time: 10m
+        alertname: RankerSearchNotReady
+        exp_alerts:
+          - exp_labels: {job: nlp-ranker-api, severity: warning}
+            exp_annotations: {summary: Поисковый выпуск или PostgreSQL не готовы}
+      - eval_time: 10m
+        alertname: RankerSearchErrors
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: Поиск возвращает серверные ошибки}
+
+  - interval: 1m
+    input_series:
+      - series: 'up{job="nlp-ranker-api"}'
+        values: '1+0x10'
+      - series: 'nlp_ranker_search_ready{job="nlp-ranker-api"}'
+        values: '1+0x10'
+      - series: 'http_requests_total{job="nlp-ranker-api",handler="/v1/search",status="200"}'
+        values: '0+10x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: RankerApiUnavailable
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: RankerSearchNotReady
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: RankerSearchErrors
+        exp_alerts: []

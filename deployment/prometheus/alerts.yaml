@@ -1,0 +1,26 @@
+groups:
+  - name: nlp-ranker-api
+    rules:
+      - alert: RankerApiUnavailable
+        expr: up{job="nlp-ranker-api"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Маршрут метрик API недоступен
+
+      - alert: RankerSearchNotReady
+        expr: nlp_ranker_search_ready{job="nlp-ranker-api"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Поисковый выпуск или PostgreSQL не готовы
+
+      - alert: RankerSearchErrors
+        expr: sum(rate(http_requests_total{job="nlp-ranker-api",handler="/v1/search",status=~"5.."}[5m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Поиск возвращает серверные ошибки
