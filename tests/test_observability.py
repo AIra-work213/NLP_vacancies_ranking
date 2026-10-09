@@ -21,7 +21,7 @@ def logging_server(tmp_path_factory):
     module = directory / "probe_app.py"
     module.write_text(
         dedent('''\
-        """HTTP-приложение для проверки логов, контекста и ошибок."""
+        """HTTP-приложение для проверки логов, контекста и ошибок"""
 
         import asyncio
         import structlog
@@ -29,13 +29,13 @@ def logging_server(tmp_path_factory):
         from nlp_ranker.core.config import Settings
 
         def create_app():
-            """Создаёт приложение с тестовыми маршрутами."""
+            """Создаёт приложение с тестовыми маршрутами"""
             settings = Settings(_env_file=None, environment="test", log_format="json")
             app = build_app(settings)
 
             @app.get("/probe")
             async def probe():
-                """Возвращает контекст запроса и контекст вычисления в потоке."""
+                """Возвращает контекст запроса и контекст вычисления в потоке"""
                 await asyncio.sleep(0.02)
                 context = structlog.contextvars.get_contextvars()
                 get_context = structlog.contextvars.get_contextvars
@@ -48,7 +48,7 @@ def logging_server(tmp_path_factory):
 
             @app.get("/failure")
             async def failure():
-                """Проверяет скрытие содержимого непредвиденного исключения."""
+                """Проверяет скрытие содержимого непредвиденного исключения"""
                 raise RuntimeError("private-body-secret")
 
             return app

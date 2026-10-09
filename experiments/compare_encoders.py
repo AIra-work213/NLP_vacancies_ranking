@@ -28,7 +28,7 @@ MODELS = [
     "cointegrated/rubert-tiny2",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
 ]
-EXPERIMENT = "E5-small / MiniLM-L12-v2 / ruBERT-tiny2 — сравнение моделей на CPU"
+EXPERIMENT = "E5-small / MiniLM-L12-v2 / ruBERT-tiny2 - сравнение моделей на CPU"
 OUTPUT = Path("artifacts/reports/encoder-comparison")
 
 
@@ -92,7 +92,7 @@ def collect(config, documents, queries):
         )
         mlflow.set_experiment(EXPERIMENT)
         with mlflow.start_run(
-            run_name=f"{short} — индексация и поиск, validation"
+            run_name=f"{short} - индексация и поиск, validation"
         ) as run:
             print(f"Модель: {name}", flush=True)
             model = SentenceTransformer(
@@ -181,8 +181,8 @@ def collect(config, documents, queries):
                 "performance": performance,
                 "retrieval_run_id": run.info.run_id,
             }
-            rankings[f"{short} — dense"] = dense_ranks
-            rankings[f"{short} — BM25 + RRF"] = hybrid_ranks
+            rankings[f"{short} - dense"] = dense_ranks
+            rankings[f"{short} - BM25 + RRF"] = hybrid_ranks
         del model, vectors, rows
         gc.collect()
     (OUTPUT / "rankings.json").write_text(
@@ -229,7 +229,7 @@ def report(documents, queries):
         return
     mlflow.set_experiment(EXPERIMENT)
     with mlflow.start_run(
-        run_name="E5-small / MiniLM-L12 / ruBERT-tiny2 — итоговое сравнение, validation"
+        run_name="E5-small / MiniLM-L12 / ruBERT-tiny2 - итоговое сравнение, validation"
     ) as parent:
         mlflow.log_dict(judgments, "evaluation/common-qrels.json")
         mlflow.log_artifact(__file__, "source")
@@ -250,7 +250,7 @@ def report(documents, queries):
                 for metric in ["ndcg_at_10", "mrr_at_10", "recall_at_100"]
             }
             with mlflow.start_run(
-                run_name=f"{name} — оценка, validation", nested=True
+                run_name=f"{name} - оценка, validation", nested=True
             ) as run:
                 mlflow.log_params(
                     {
@@ -262,7 +262,7 @@ def report(documents, queries):
                     }
                 )
                 if name != "BM25":
-                    short = name.split(" — ")[0]
+                    short = name.split()[0]
                     mlflow.log_params(saved["models"][short]["params"])
                     mlflow.set_tag(
                         "retrieval_run_id", saved["models"][short]["retrieval_run_id"]

@@ -47,8 +47,8 @@ stages:
       size: 2148427
     - path: data/qrels.csv
       hash: md5
-      md5: a7f7e50ef1f4436c32005e9ebfc23c25
-      size: 48602
+      md5: 1e8d71034bb30fec23012115f798e4e3
+      size: 48141
     - path: data/queries.csv
       hash: md5
       md5: 492d80254edfe9a7a7187943be672b1a
@@ -68,8 +68,8 @@ stages:
     outs:
     - path: data/processed/qrels.parquet
       hash: md5
-      md5: 2564d03ec959a2a017b4d1ccbe211c98
-      size: 29394
+      md5: 51437d29ba8bb67a75457efa62183ac5
+      size: 29328
     - path: data/processed/queries.parquet
       hash: md5
       md5: caba98a90845ecd0b7b0a78bb02a380a

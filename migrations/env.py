@@ -1,4 +1,4 @@
-"""Асинхронные миграции Alembic с общими для API настройками подключения."""
+"""Асинхронные миграции Alembic с общими для API настройками подключения"""
 
 import asyncio
 
@@ -14,7 +14,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations(connection: Connection) -> None:
-    """Применяет миграции через открытое соединение."""
+    """Применяет миграции через открытое соединение"""
     context.configure(
         connection=connection, target_metadata=target_metadata, compare_type=True
     )
@@ -23,7 +23,7 @@ def run_migrations(connection: Connection) -> None:
 
 
 async def run_online() -> None:
-    """Открывает соединение для миграций и закрывает его после выполнения."""
+    """Открывает соединение для миграций и закрывает его после выполнения"""
     engine = create_async_engine(Settings().postgres_dsn, poolclass=NullPool)
     try:
         async with engine.connect() as connection:

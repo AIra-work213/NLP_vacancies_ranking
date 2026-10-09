@@ -45,10 +45,10 @@ def pipeline_names(stage: str, config: dict[str, object]) -> tuple[str, str]:
         "train": "обучение",
     }
     purpose = purposes.get(stage, stage)
-    experiment = f"{model} — {purpose}"
+    experiment = f"{model} - {purpose}"
     name = experiment
     if stage == "evaluate":
-        name += f" — {method}, {config.get('split', 'validation')}"
+        name += f" - {method}, {config.get('split', 'validation')}"
     return experiment, name
 
 

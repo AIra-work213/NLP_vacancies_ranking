@@ -1,7 +1,7 @@
 # Проверки проекта
 
 `make check` запускает Ruff, проверку форматирования, mypy и pytest.
-HTTP-контракт проверяется через HTTPX и отдельный процесс Uvicorn.
+HTTP-контракт проверяется через HTTPX и отдельный процесс Uvicorn
 
 - `test_api.py`, `test_server_http.py`: эндпоинты, фильтры, ошибки, реальный поиск,
   отказ Redis и конкурентное изменение документов
@@ -15,13 +15,13 @@ HTTP-контракт проверяется через HTTPX и отдельн�
 Команды `make test-database`, `make test-storage` и `make test-server` запускают
 нужные сервисы. `make test-down` останавливает тестовое окружение.
 Для полного запуска задаются NLP_RANKER_TEST_POSTGRES_DSN,
-NLP_RANKER_TEST_REDIS_URL и NLP_RANKER_TEST_S3_ENDPOINT_URL, как в Makefile.
+NLP_RANKER_TEST_REDIS_URL и NLP_RANKER_TEST_S3_ENDPOINT_URL, как в Makefile
 
 
 Интерфейс дополнительно проверяется через Streamlit AppTest в test_server_http.py:
 отправка формы, фильтрация, открытие документа, отсутствие повторного поиска
 и изоляция сессий. HTTP-клиент и сообщения об отказах проверяются в test_ui_client.py.
-Для запуска AppTest требуется установленная группа demo.
+Для запуска AppTest требуется установленная группа demo
 
 ## Полный интеграционный запуск
 
